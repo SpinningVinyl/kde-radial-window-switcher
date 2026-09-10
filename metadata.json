@@ -1,0 +1,19 @@
+{
+    "KPackageStructure": "KWin/Effect",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Pavel Urusov"
+            }
+        ],
+        "Category": "Window Management",
+        "Description": "Radial window switcher centered on the mouse cursor",
+        "EnabledByDefault": false,
+        "Id": "com.github.spinningvinyl.kde-radial-window-switcher",
+        "License": "GPL-2.0-or-later",
+        "Name": "Radial Window Switcher",
+        "Version": "0.4.3"
+    },
+    "X-KDE-Ordering": 60,
+    "X-Plasma-API": "declarativescript"
+}
