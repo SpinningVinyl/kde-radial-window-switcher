@@ -34,7 +34,7 @@ If you edit the installed package and want to reinstall it:
 kpackagetool6 --type KWin/Effect --upgrade radial-window-switcher/
 ```
 
-You may need to toggle the effect off/on or log out of your user session and log back in after an upgrade.
+You may need to toggle the effect off/on or log out of your user session and log back in after upgrading the package.
 
 ## Uninstall
 
@@ -48,3 +48,9 @@ kpackagetool6 --type KWin/Effect --remove radial-window-switcher
 2. It intentionally limits the radial menu to ten windows.
 3. When the cursor is too close to an edge of the screen or to a corner, the geometry can become a bit (or a lot) whacky.
 4. The effect excludes `specialWindow`, `skipSwitcher`, unmanaged/deleted windows, the currently active window and windows that do not want input. Please see `contents/ui/main.qml` for details.
+
+## License
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
