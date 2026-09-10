@@ -273,8 +273,8 @@ SceneEffect {
                                                ? Math.atan2(inwardY, inwardX)
                                                : -Math.PI / 2
         readonly property real fanSpan: cornerConstrained
-                                        ? Math.PI / 3          // 60 degrees
-                                        : Math.PI * 0.78       // about 140 degrees
+                                        ? Math.PI * 0.46       // ~83 degrees
+                                        : Math.PI * 0.89       // ~160 degrees
 
         function radialRank(index) {
             return index === 0 ? 0 : Math.ceil(index / 2);
@@ -282,24 +282,25 @@ SceneEffect {
 
         function itemAngle(index) {
             const count = effect.candidates.length;
+
             if (count <= 0) {
                 return -Math.PI / 2;
             }
 
             if (!edgeConstrained) {
+                // Full circle: #1 at 12 o'clock, then clockwise.
                 return -Math.PI / 2 + Math.PI * 2 * index / count;
             }
 
-            if (count === 1 || index === 0) {
+            if (count === 1) {
                 return fanCenterAngle;
             }
 
-            // Put item #1 in the easiest direction (straight into the screen),
-            // then alternate later items to either side of it.
-            const rank = radialRank(index);
-            const side = index % 2 === 1 ? 1 : -1;
-            const step = fanSpan / count;
-            return fanCenterAngle + side * rank * step;
+            const step = fanSpan / (count - 1);
+
+            // Constrained fan: always number sequentially clockwise
+            // from one edge of the usable fan to the other.
+            return fanCenterAngle - fanSpan / 2 + index * step;
         }
 
         function radiusBoundsForAngle(angle) {
@@ -353,28 +354,66 @@ SceneEffect {
         }
 
         function itemRadius(index) {
+            const desired = crowdingAdjustedRadius();
             const angle = itemAngle(index);
             const bounds = radiusBoundsForAngle(angle);
+
             if (!bounds.valid) {
                 return ringRadius;
             }
 
-            let desired = ringRadius;
+            // Keep every card on its own ray, but otherwise preserve
+            // a common radius so the entries form a clean arc.
+            return Math.max(bounds.min, Math.min(bounds.max, desired));
+        }
 
-            // A narrow corner fan can contain many items. Alternate successive
-            // angular ranks between concentric rings to keep neighbouring cards
-            // visually distinct without changing their selection direction.
-            if (cornerConstrained && effect.candidates.length > 5) {
-                const rank = radialRank(index);
-                desired += (rank % 3) * 68;
-            } else if (edgeConstrained && effect.candidates.length > 7) {
-                const rank = radialRank(index);
-                desired += (rank % 2) * 58;
+        function crowdingAdjustedRadius() {
+            const count = effect.candidates.length;
+
+            if (!edgeConstrained || count < 2) {
+                return ringRadius;
             }
 
-            // Moving a card to fit is allowed only along its own ray. Unlike
-            // x/y clamping, this preserves the visual angle used for selection.
-            return Math.max(bounds.min, Math.min(bounds.max, desired));
+            // Calculate the actual angles, then sort them geometrically.
+            const angles = [];
+            for (let i = 0; i < count; ++i) {
+                angles.push(itemAngle(i));
+            }
+
+            angles.sort((a, b) => a - b);
+
+            const gap = 12;
+            const requiredWidth = cardWidth + gap;
+            const requiredHeight = cardHeight + gap;
+            const epsilon = 0.000001;
+
+            let requiredRadius = ringRadius;
+
+            for (let i = 0; i < angles.length - 1; ++i) {
+                const a = angles[i];
+                const b = angles[i + 1];
+
+                // At radius r, these are the horizontal/vertical distances
+                // between the two card centres divided by r.
+                const dx = Math.abs(Math.cos(a) - Math.cos(b));
+                const dy = Math.abs(Math.sin(a) - Math.sin(b));
+
+                // Two axis-aligned cards cease overlapping as soon as either
+                // their horizontal OR vertical separation is sufficient.
+                const radiusForX = dx > epsilon
+                    ? requiredWidth / dx
+                    : Number.POSITIVE_INFINITY;
+
+                const radiusForY = dy > epsilon
+                    ? requiredHeight / dy
+                    : Number.POSITIVE_INFINITY;
+
+                const pairRadius = Math.min(radiusForX, radiusForY);
+
+                requiredRadius = Math.max(requiredRadius, pairRadius);
+            }
+
+            return requiredRadius;
         }
 
         function indexFromPointer(localX, localY) {
