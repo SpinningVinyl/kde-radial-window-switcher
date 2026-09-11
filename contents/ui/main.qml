@@ -11,6 +11,7 @@ SceneEffect {
     readonly property real deadZoneRadius: 42
 
     property point invocationPos: Qt.point(0, 0)
+    property var invocationWindow: null
     property var invocationScreen: null
     property var candidates: []
     property var mruWindows: []
@@ -23,10 +24,6 @@ SceneEffect {
             && !window.specialWindow
             && !window.skipSwitcher
             && window.wantsInput;
-    }
-
-    function eligible(window) {
-        return trackable(window) && window !== Workspace.activeWindow;
     }
 
     function moveToMruFront(window) {
@@ -100,6 +97,18 @@ SceneEffect {
         mruWindows = next;
     }
 
+    function shortcutLabel(index) {
+        if (index < 0 || index >= candidates.length) {
+            return "";
+        }
+
+        if (candidates[index] === invocationWindow) {
+            return "0";
+        }
+
+        return String(index + 1);
+    }    
+
     function onCurrentDesktop(window) {
         if (window.onAllDesktops) {
             return true;
@@ -130,16 +139,25 @@ SceneEffect {
         reconcileMru();
 
         const result = [];
+        const active = invocationWindow;
+        const includeActive = trackable(active);
+
+        const mruLimit = includeActive ? maximumItems - 1 : maximumItems;
+        
         for (let i = 0; i < mruWindows.length; ++i) {
             const window = mruWindows[i];
-            if (!eligible(window)) {
+            if (!trackable(window) || window === active) {
                 continue;
             }
 
             result.push(window);
-            if (result.length >= maximumItems) {
+            if (result.length >= mruLimit) {
                 break;
             }
+        }
+
+        if (includeActive) {
+            result.push(active);
         }
 
         candidates = result;
@@ -148,6 +166,7 @@ SceneEffect {
     function openSwitcher() {
         invocationPos = Workspace.cursorPos;
         invocationScreen = Workspace.screenAt(invocationPos);
+        invocationWindow = Workspace.activeWindow;
         selectedIndex = -1;
         snapshotWindows();
 
@@ -275,10 +294,6 @@ SceneEffect {
         readonly property real fanSpan: cornerConstrained
                                         ? Math.PI * 0.46       // ~83 degrees
                                         : Math.PI * 0.89       // ~160 degrees
-
-        function radialRank(index) {
-            return index === 0 ? 0 : Math.ceil(index / 2);
-        }
 
         function itemAngle(index) {
             const count = effect.candidates.length;
@@ -440,8 +455,8 @@ SceneEffect {
             // In fan mode, do not make an item selectable from the inaccessible
             // side of the pointer. Give the two end sectors half a step of slack.
             if (edgeConstrained) {
-                const step = effect.candidates.length > 0
-                           ? fanSpan / effect.candidates.length
+                const step = effect.candidates.length > 1
+                           ? fanSpan / (effect.candidates.length - 1)
                            : fanSpan;
                 if (effect.angularDistance(pointerAngle, fanCenterAngle)
                         > fanSpan / 2 + step / 2) {
@@ -451,6 +466,8 @@ SceneEffect {
 
             return bestIndex;
         }
+
+
 
         focus: invocationView
 
@@ -541,7 +558,7 @@ SceneEffect {
                     anchors.centerIn: parent
                     text: effect.selectedIndex < 0
                           ? "•"
-                          : String(effect.selectedIndex + 1)
+                          : effect.shortcutLabel(effect.selectedIndex)
                     color: "white"
                     font.pixelSize: 22
                     font.bold: true
@@ -605,7 +622,7 @@ SceneEffect {
 
                         Text {
                             anchors.centerIn: parent
-                            text: card.index === 9 ? "0" : String(card.index + 1)
+                            text: effect.shortcutLabel(card.index)
                             color: "white"
                             font.pixelSize: 13
                             font.bold: true
@@ -649,7 +666,8 @@ SceneEffect {
             } else {
                 // Number keys are positional shortcuts for the currently
                 // displayed radial entries: 1..9 select items 1..9 and 0
-                // selects item 10. Ctrl+number remains accepted as well.
+                // selects the window that was active when the switcher
+                // was invoked.
                 const blockedModifiers = Qt.ShiftModifier | Qt.AltModifier | Qt.MetaModifier;
                 const hasBlockedModifier = (event.modifiers & blockedModifiers) !== 0;
                 let shortcutIndex = -1;
@@ -665,8 +683,16 @@ SceneEffect {
                     case Qt.Key_7: shortcutIndex = 6; break;
                     case Qt.Key_8: shortcutIndex = 7; break;
                     case Qt.Key_9: shortcutIndex = 8; break;
-                    case Qt.Key_0: shortcutIndex = 9; break;
+                    case Qt.Key_0:
+                        shortcutIndex = effect.candidates.indexOf(effect.invocationWindow);
+                        break;
                     }
+                }
+
+                if (shortcutIndex >= 0  && shortcutIndex < effect.candidates.length
+                    && effect.candidates[shortcutIndex] === effect.invocationWindow
+                    && event.key !== Qt.Key_0) {
+                        shortcutIndex = -1;
                 }
 
                 if (shortcutIndex >= 0) {
@@ -674,6 +700,7 @@ SceneEffect {
                 } else {
                     handled = false;
                 }
+                
             }
 
             if (handled) {

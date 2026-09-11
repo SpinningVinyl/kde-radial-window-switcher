@@ -12,7 +12,7 @@
         "Id": "com.github.spinningvinyl.kde-radial-window-switcher",
         "License": "GPL-2.0-or-later",
         "Name": "Radial Window Switcher",
-        "Version": "0.5.0"
+        "Version": "0.6.0"
     },
     "X-KDE-Ordering": 60,
     "X-Plasma-API": "declarativescript"
