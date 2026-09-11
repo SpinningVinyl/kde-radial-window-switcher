@@ -49,6 +49,10 @@ kpackagetool6 --type KWin/Effect --remove com.github.spinningvinyl.kde-radial-wi
 3. When the cursor is too close to an edge of the screen or to a corner, the geometry can become a bit (or a lot) whacky.
 4. The effect excludes `specialWindow`, `skipSwitcher`, unmanaged/deleted windows and windows that do not want input. Please see `contents/ui/main.qml` for details.
 
+## Mouse cursor warping
+
+Since version v0.7.0, the switcher warps the mouse cursor to the focused window. If you don't like this behaviour, comment out `moveMouseToFocus.call()` in the `onWindowActivated()` function.
+
 ## License
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.

@@ -18,6 +18,8 @@ SceneEffect {
     property var mruWindows: []
     property int selectedIndex: -1
 
+    property var pendingPointerWindow: null
+
     Timer {
         id: autoDismissTimer
 
@@ -28,6 +30,18 @@ SceneEffect {
             console.log("Radial switcher timed out")
             effect.cancel()
         }
+    }
+
+    DBusCall {
+        id: moveMouseToFocus
+
+        service: "org.kde.kglobalaccel"
+        path: "/component/kwin"
+        dbusInterface: "org.kde.kglobalaccel.Component"
+        method: "invokeShortcut"
+        arguments: ["MoveMouseToFocus"]
+
+        onFailed: console.warn("Failed to move cursor to focused window")
     }
 
     function trackable(window) {
@@ -195,6 +209,16 @@ SceneEffect {
         autoDismissTimer.stop();
     }
 
+    function matchesActivation(window, target) {
+        while (window) {
+            if (window === target) {
+                return true;
+            }
+            window = window.modal ? window.transientFor : null;
+        }
+        return false;
+    }
+
     function activateIndex(index) {
         if (index < 0 || index >= candidates.length) {
             return;
@@ -207,6 +231,7 @@ SceneEffect {
 
         // activeWindow is writable in KWin's scripting workspace API; setting
         // it performs the same sort of activation as a task switcher.
+        pendingPointerWindow = matchesActivation(Workspace.activeWindow, window) ? null : window;
         Workspace.activeWindow = window;
     }
 
@@ -235,6 +260,15 @@ SceneEffect {
 
         function onWindowActivated(window) {
             effect.moveToMruFront(window);
+
+            if (!window) {
+                return;
+            }
+            const target = effect.pendingPointerWindow;
+            effect.pendingPointerWindow = null;
+            if (target && effect.matchesActivation(window, target)) {
+                moveMouseToFocus.call();
+            }
         }
 
         function onWindowAdded(window) {
