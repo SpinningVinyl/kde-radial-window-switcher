@@ -9,6 +9,7 @@ SceneEffect {
     // naturally to the 1..9 and 0 keys.
     readonly property int maximumItems: 10
     readonly property real deadZoneRadius: 42
+    readonly property int autoDismissInterval: 30000
 
     property point invocationPos: Qt.point(0, 0)
     property var invocationWindow: null
@@ -16,6 +17,18 @@ SceneEffect {
     property var candidates: []
     property var mruWindows: []
     property int selectedIndex: -1
+
+    Timer {
+        id: autoDismissTimer
+
+        interval: effect.autoDismissInterval
+        repeat: false
+
+        onTriggered: {
+            console.log("Radial switcher timed out")
+            effect.cancel()
+        }
+    }
 
     function trackable(window) {
         return window
@@ -172,12 +185,14 @@ SceneEffect {
 
         if (candidates.length > 0) {
             visible = true;
+            autoDismissTimer.restart();
         }
     }
 
     function cancel() {
         selectedIndex = -1;
         visible = false;
+        autoDismissTimer.stop();
     }
 
     function activateIndex(index) {
@@ -186,6 +201,8 @@ SceneEffect {
         }
 
         const window = candidates[index];
+
+        autoDismissTimer.stop();
         visible = false;
 
         // activeWindow is writable in KWin's scripting workspace API; setting
