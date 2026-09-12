@@ -266,7 +266,8 @@ SceneEffect {
             }
             const target = effect.pendingPointerWindow;
             effect.pendingPointerWindow = null;
-            if (target && effect.matchesActivation(window, target)) {
+            if (target && effect.matchesActivation(window, target)
+                    && effect.configuration.TeleportCursor) {
                 moveMouseToFocus.call();
             }
         }

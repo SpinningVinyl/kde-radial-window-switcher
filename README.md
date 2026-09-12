@@ -51,7 +51,7 @@ kpackagetool6 --type KWin/Effect --remove com.github.spinningvinyl.kde-radial-wi
 
 ## Mouse cursor warping
 
-Since version v0.7.0, the switcher warps the mouse cursor to the focused window. If you don't like this behaviour, comment out `moveMouseToFocus.call()` in the `onWindowActivated()` function.
+Cursor warping is disabled by default. To change it, open **System Settings → Window Management → Desktop Effects**, find **Radial Window Switcher**, and open its configuration dialog. Toggle **Teleport mouse pointer to the activated window** and apply the change.
 
 ## License
 
