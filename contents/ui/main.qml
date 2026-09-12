@@ -612,8 +612,7 @@ SceneEffect {
                           ? "•"
                           : effect.shortcutLabel(effect.selectedIndex)
                     color: "white"
-                    font.pixelSize: 22
-                    font.bold: true
+                    font: Kirigami.Theme.defaultFont
                 }
             }
 
@@ -636,9 +635,9 @@ SceneEffect {
                     width: scene.cardWidth
                     height: scene.cardHeight
                     radius: 10
-                    color: selected ? "#f02f6fbd" : "#e625272a"
+                    color: selected ? Kirigami.Theme.highlightColor : "#e625272a"
                     border.width: selected ? 3 : 1
-                    border.color: selected ? "white" : "#70ffffff"
+                    border.color: selected ? Kirigami.Theme.highlightedTextColor : "#70ffffff"
                     scale: selected ? 1.08 : 1.0
                     z: selected ? 2 : 1
 
@@ -676,8 +675,7 @@ SceneEffect {
                             anchors.centerIn: parent
                             text: effect.shortcutLabel(card.index)
                             color: "white"
-                            font.pixelSize: 13
-                            font.bold: true
+                            font: Kirigami.Theme.smallFont
                         }
                     }
 
@@ -691,8 +689,8 @@ SceneEffect {
                             bottomMargin: 8
                         }
                         text: card.modelData.caption
-                        color: "white"
-                        font.pixelSize: 12
+                        color: card.selected ? Kirigami.Theme.highlightedTextColor : "white"
+                        font: Kirigami.Theme.defaultFont
                         elide: Text.ElideRight
                         maximumLineCount: 1
                     }
